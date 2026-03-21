@@ -10,6 +10,12 @@
         p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
         .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         textarea { width: 100%; height: 200px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; resize: vertical; box-sizing: border-box; }
+
+        /* Styl dla nowych rozwijanych list */
+        .options-container { display: flex; gap: 20px; margin-top: 15px; }
+        .option-group { flex: 1; }
+        select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; background-color: #fff; cursor: pointer; }
+
         button { display: block; width: 100%; padding: 15px; margin-top: 20px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: background 0.3s; }
         button:hover { background-color: #2980b9; }
         button:disabled { background-color: #95a5a6; cursor: not-allowed; }
@@ -17,7 +23,7 @@
         /* Styl błędu i wyniku */
         #error-msg { color: #e74c3c; background: #fadbd8; padding: 10px; border-radius: 5px; margin-top: 20px; display: none; }
         #result-container { margin-top: 30px; display: none; }
-        pre { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; font-size: 14px; }
 
         /* Spinner CSS */
         .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -27,11 +33,33 @@
 <body>
 
 <h1>🎙️ Analizator Podcastów AI</h1>
-<p class="subtitle">Wklej surową transkrypcję z rozmowy, a sztuczna inteligencja wyciągnie z niej kluczowe informacje.</p>
+<p class="subtitle">Wklej surową transkrypcję z rozmowy i wybierz, w jakim stylu AI ma ją przeanalizować.</p>
 
 <div class="container">
     <form id="analyze-form">
         <textarea id="transcript" placeholder="Wklej tekst transkrypcji tutaj..." required></textarea>
+
+        <div class="options-container">
+            <div class="option-group">
+                <label for="tone"><strong>Ton wypowiedzi:</strong></label>
+                <select id="tone" name="tone">
+                    <option value="srodze_techniczna">Srodze Techniczna</option>
+                    <option value="techniczna">Techniczna</option>
+                    <option value="srednia" selected>Średnia (Domyślna)</option>
+                    <option value="luzna">Luźna</option>
+                    <option value="calkiem_na_luzie">Całkiem na luzie</option>
+                </select>
+            </div>
+            <div class="option-group">
+                <label for="creativity"><strong>Kreatywność:</strong></label>
+                <select id="creativity" name="creativity">
+                    <option value="niska">Niska (Tylko suche fakty)</option>
+                    <option value="srednia" selected>Średnia (Zbalansowana)</option>
+                    <option value="wysoka">Wysoka (Bardzo opisowa)</option>
+                </select>
+            </div>
+        </div>
+
         <button type="submit" id="submit-btn">Analizuj tekst</button>
     </form>
 
@@ -47,28 +75,35 @@
 
 <script>
     document.getElementById('analyze-form').addEventListener('submit', async function(e) {
-        e.preventDefault(); // Zatrzymuje standardowe przeładowanie strony
+        e.preventDefault(); // Zatrzymuje przeładowanie strony
 
+        // Pobieranie wartości z pół
         const textInput = document.getElementById('transcript').value;
+        const toneInput = document.getElementById('tone').value;
+        const creativityInput = document.getElementById('creativity').value;
+
+        // Pobieranie elementów UI
         const btn = document.getElementById('submit-btn');
         const spinner = document.getElementById('loading-spinner');
         const errorMsg = document.getElementById('error-msg');
         const resultContainer = document.getElementById('result-container');
         const jsonResult = document.getElementById('json-result');
 
-        // Resetujemy stan widoku
+        // Resetowanie stanu widoku przed wysłaniem
         errorMsg.style.display = 'none';
         resultContainer.style.display = 'none';
         spinner.style.display = 'block';
         btn.disabled = true;
-        btn.innerText = "Przetwarzanie (to może potrwać kilka sekund)...";
+        btn.innerText = "Przetwarzanie AI (to potrwa kilka sekund)...";
 
-        // Przygotowujemy dane do wysłania
+        // Przygotowanie paczki danych do wysłania
         const formData = new FormData();
         formData.append('transcript', textInput);
+        formData.append('tone', toneInput);
+        formData.append('creativity', creativityInput);
 
         try {
-            // Wysyłamy zapytanie do naszego backendu we Flasku
+            // Wysłanie zapytania do backendu (Flask)
             const response = await fetch('/analyze', {
                 method: 'POST',
                 body: formData
@@ -77,7 +112,7 @@
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Wystąpił nieznany błąd.');
+                throw new Error(data.error || 'Wystąpił nieznany błąd serwera.');
             }
 
             // Sukces! Wyświetlamy JSON
@@ -89,7 +124,7 @@
             errorMsg.textContent = error.message;
             errorMsg.style.display = 'block';
         } finally {
-            // Przywracamy przycisk i ukrywamy spinner
+            // Przywrócenie przycisku i ukrycie spinnera
             spinner.style.display = 'none';
             btn.disabled = false;
             btn.innerText = "Analizuj tekst";
