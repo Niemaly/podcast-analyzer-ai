@@ -1,0 +1,18 @@
+# 1. Zmienne środowiskowe i sekrety (TO JUŻ MASZ - NAJWAŻNIEJSZE)
+.env
+
+# 2. Środowisko wirtualne (Zajmuje mnóstwo miejsca i działa tylko na Twoim komputerze)
+.venv/
+venv/
+env/
+
+# 3. Ustawienia edytora PyCharm (Są to Twoje prywatne preferencje wyglądu edytora)
+.idea/
+
+# 4. Śmieci generowane przez Pythona podczas uruchamiania (tzw. cache)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 5. Cache narzędzi testowych (Generowane przez pytesta)
+.pytest_cache/

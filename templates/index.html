@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizator Podcastów AI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; }
+        h1 { color: #2c3e50; text-align: center; }
+        p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 200px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; resize: vertical; box-sizing: border-box; }
+        button { display: block; width: 100%; padding: 15px; margin-top: 20px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #2980b9; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+
+        /* Styl błędu i wyniku */
+        #error-msg { color: #e74c3c; background: #fadbd8; padding: 10px; border-radius: 5px; margin-top: 20px; display: none; }
+        #result-container { margin-top: 30px; display: none; }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; }
+
+        /* Spinner CSS */
+        .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<h1>🎙️ Analizator Podcastów AI</h1>
+<p class="subtitle">Wklej surową transkrypcję z rozmowy, a sztuczna inteligencja wyciągnie z niej kluczowe informacje.</p>
+
+<div class="container">
+    <form id="analyze-form">
+        <textarea id="transcript" placeholder="Wklej tekst transkrypcji tutaj..." required></textarea>
+        <button type="submit" id="submit-btn">Analizuj tekst</button>
+    </form>
+
+    <div class="spinner" id="loading-spinner"></div>
+
+    <div id="error-msg"></div>
+
+    <div id="result-container">
+        <h3>Wynik analizy:</h3>
+        <pre id="json-result"></pre>
+    </div>
+</div>
+
+<script>
+    document.getElementById('analyze-form').addEventListener('submit', async function(e) {
+        e.preventDefault(); // Zatrzymuje standardowe przeładowanie strony
+
+        const textInput = document.getElementById('transcript').value;
+        const btn = document.getElementById('submit-btn');
+        const spinner = document.getElementById('loading-spinner');
+        const errorMsg = document.getElementById('error-msg');
+        const resultContainer = document.getElementById('result-container');
+        const jsonResult = document.getElementById('json-result');
+
+        // Resetujemy stan widoku
+        errorMsg.style.display = 'none';
+        resultContainer.style.display = 'none';
+        spinner.style.display = 'block';
+        btn.disabled = true;
+        btn.innerText = "Przetwarzanie (to może potrwać kilka sekund)...";
+
+        // Przygotowujemy dane do wysłania
+        const formData = new FormData();
+        formData.append('transcript', textInput);
+
+        try {
+            // Wysyłamy zapytanie do naszego backendu we Flasku
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Wystąpił nieznany błąd.');
+            }
+
+            // Sukces! Wyświetlamy JSON
+            jsonResult.textContent = JSON.stringify(data, null, 4);
+            resultContainer.style.display = 'block';
+
+        } catch (error) {
+            // Obsługa błędu
+            errorMsg.textContent = error.message;
+            errorMsg.style.display = 'block';
+        } finally {
+            // Przywracamy przycisk i ukrywamy spinner
+            spinner.style.display = 'none';
+            btn.disabled = false;
+            btn.innerText = "Analizuj tekst";
+        }
+    });
+</script>
+</body>
+</html>
