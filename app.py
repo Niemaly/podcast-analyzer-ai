@@ -12,27 +12,30 @@ def index():
 @app.route('/analyze', methods=['POST'])
 def analyze():
     raw_text = request.form.get('transcript')
-
-    # 1. Pobieramy nowe parametry z formularza (lub ustawiamy domyślne)
     tone_val = request.form.get('tone', 'srednia')
     creativity_val = request.form.get('creativity', 'srednia')
 
+    # 1. TARCZA NA PUSTY TEKST
     if not raw_text or len(raw_text.strip()) == 0:
         return jsonify({'error': 'Proszę wprowadzić tekst transkrypcji.'}), 400
 
+    # 2. TARCZA NA ZBYT DŁUGI TEKST (Gilotyna backendowa)
+    MAX_CHARS = 15000
+    if len(raw_text) > MAX_CHARS:
+        return jsonify({'error': f'Tekst jest za długi. Przesłano {len(raw_text)} znaków, a limit wynosi {MAX_CHARS}.'}), 400
+
     try:
-        # 2. Tworzymy obiekt Pydantic. Jeśli ktoś wyśle z HTMLa niepoprawną
-        # wartość (np. "super_hiper_luz"), Pydantic od razu wyrzuci błąd (ValueError)
         profil = AIProfile(
             tone=ToneLevel(tone_val),
             creativity=CreativityLevel(creativity_val)
         )
+        # ... (reszta funkcji analyze, czyli wywołanie analyze_transcript i obsługa wyjątków, zostaje bez zmian) ...
 
-        # 3. Przekazujemy tekst ORAZ profil do naszej funkcji AI
         result_str = analyze_transcript(raw_text, profile=profil)
         result_json = json.loads(result_str)
 
         return jsonify(result_json)
+
 
     except ValueError as e:
         return jsonify({'error': f'Błędne parametry profilu: {str(e)}'}), 400
