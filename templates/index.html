@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizator Podcastów & Social Media AI</title>
+    <title>Studio Podcastowe AI</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; }
         h1 { color: #2c3e50; text-align: center; }
@@ -20,13 +20,11 @@
         .box-title { border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-bottom: 15px; color: #2c3e50; }
         .error { color: #e74c3c; background: #fadbd8; padding: 15px; border-radius: 5px; margin-top: 20px; display: none; }
 
-        /* Sekcje z wynikami */
         #analysis-section, #linkedin-section { display: none; }
         .post-card { background: #f8f9fa; border-left: 4px solid #3498db; padding: 15px; margin-bottom: 15px; border-radius: 4px; white-space: pre-wrap; font-size: 15px;}
         .post-card h4 { margin-top: 0; color: #2980b9; }
         pre { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; font-size: 14px; }
 
-        /* Ładowanie */
         .loading { display: none; text-align: center; margin: 20px 0; font-weight: bold; color: #3498db; }
         .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -95,32 +93,25 @@
     function formatText(text) {
         if (!text) return '';
         return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Zmienia **tekst** na pogrubienie
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')             // Zmienia *tekst* na kursywę
-            .replace(/\n/g, '<br>');                          // Zamienia enter na złamanie linii w HTML
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
     }
-
-    document.getElementById('workflow-form').addEventListener('submit', async function(e) {
-
 
     document.getElementById('workflow-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Pobranie elementów
         const btn = document.getElementById('submit-btn');
         const errorMsg = document.getElementById('main-error');
 
-        // Sekcje
         const analysisSec = document.getElementById('analysis-section');
         const linkedinSec = document.getElementById('linkedin-section');
         const analysisLoad = document.getElementById('analysis-loading');
         const linkedinLoad = document.getElementById('linkedin-loading');
 
-        // Wyniki
         const analysisResult = document.getElementById('analysis-result');
         const linkedinResultsDiv = document.getElementById('linkedin-results');
 
-        // --- RESETOWANIE WIDOKU ---
         errorMsg.style.display = 'none';
         btn.disabled = true;
         btn.innerText = "Trwa przetwarzanie...";
@@ -131,48 +122,40 @@
         linkedinResultsDiv.style.display = 'none';
         analysisLoad.style.display = 'block';
 
-        // Przygotowanie danych do etapu 1
         const formData = new FormData();
         formData.append('transcript', document.getElementById('transcript').value);
         formData.append('tone', document.getElementById('tone').value);
         formData.append('creativity', document.getElementById('creativity').value);
 
         try {
-            // ==========================================
-            // ETAP 1: ANALIZA TRANSKRYPCJI
-            // ==========================================
+            // Etap 1: Analiza
             const response1 = await fetch('/api/analyze-transcript', { method: 'POST', body: formData });
             const data1 = await response1.json();
             if (!response1.ok) throw new Error(data1.error || 'Błąd podczas analizy.');
 
-            // Pokazujemy wynik analizy
             analysisLoad.style.display = 'none';
             analysisResult.textContent = JSON.stringify(data1, null, 4);
             analysisResult.style.display = 'block';
 
-            // ==========================================
-            // ETAP 2: GENEROWANIE POSTÓW LINKEDIN
-            // ==========================================
+            // Etap 2: Posty na LinkedIn
             linkedinSec.style.display = 'block';
             linkedinLoad.style.display = 'block';
 
-            // Wysyłamy wygenerowany JSON (data1) prosto do drugiego endpointu!
             const response2 = await fetch('/api/generate-linkedin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data1) // Przesyłamy JSON-a
+                body: JSON.stringify(data1)
             });
             const data2 = await response2.json();
             if (!response2.ok) throw new Error(data2.error || 'Błąd podczas pisania postów.');
 
-            // Wstawiamy posty formatując je na żywo na HTML
-                linkedinLoad.style.display = 'none';
+            linkedinLoad.style.display = 'none';
             document.getElementById('post-ekspercki').innerHTML = formatText(data2.post_ekspercki);
             document.getElementById('post-storytelling').innerHTML = formatText(data2.post_storytelling);
             document.getElementById('post-zaczepny').innerHTML = formatText(data2.post_zaczepny);
+            linkedinResultsDiv.style.display = 'block';
 
         } catch (error) {
-            // Łapiemy błędy z któregokolwiek etapu
             analysisLoad.style.display = 'none';
             linkedinLoad.style.display = 'none';
             errorMsg.textContent = error.message;
