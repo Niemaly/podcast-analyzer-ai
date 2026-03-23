@@ -3,136 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizator Podcastów AI</title>
+    <title>Analizator Podcastów & Social Media AI</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; }
         h1 { color: #2c3e50; text-align: center; }
         p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
-        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        <textarea id="transcript" placeholder="Wklej tekst transkrypcji tutaj..." required></textarea>
-        /* Styl dla nowych rozwijanych list */
+        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;}
+        textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; resize: vertical; box-sizing: border-box; }
         .options-container { display: flex; gap: 20px; margin-top: 15px; }
         .option-group { flex: 1; }
         select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; background-color: #fff; cursor: pointer; }
-
-        button { display: block; width: 100%; padding: 15px; margin-top: 20px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: background 0.3s; }
+        button { display: block; width: 100%; padding: 15px; margin-top: 20px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: 0.3s; font-weight: bold; }
         button:hover { background-color: #2980b9; }
         button:disabled { background-color: #95a5a6; cursor: not-allowed; }
 
-        /* Styl błędu i wyniku */
-        #error-msg { color: #e74c3c; background: #fadbd8; padding: 10px; border-radius: 5px; margin-top: 20px; display: none; }
-        #result-container { margin-top: 30px; display: none; }
-        pre { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; font-size: 14px; }
+        .box-title { border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-bottom: 15px; color: #2c3e50; }
+        .error { color: #e74c3c; background: #fadbd8; padding: 15px; border-radius: 5px; margin-top: 20px; display: none; }
 
-        /* Spinner CSS */
-        .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Sekcje z wynikami */
+        #analysis-section, #linkedin-section { display: none; }
+        .post-card { background: #f8f9fa; border-left: 4px solid #3498db; padding: 15px; margin-bottom: 15px; border-radius: 4px; white-space: pre-wrap; font-size: 15px;}
+        .post-card h4 { margin-top: 0; color: #2980b9; }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; font-size: 14px; }
+
+        /* Ładowanie */
+        .loading { display: none; text-align: center; margin: 20px 0; font-weight: bold; color: #3498db; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<h1>🎙️ Analizator Podcastów AI</h1>
-<p class="subtitle">Wklej surową transkrypcję z rozmowy i wybierz, w jakim stylu AI ma ją przeanalizować.</p>
+<h1>🚀 Studio Podcastowe AI</h1>
+<p class="subtitle">Od surowej transkrypcji do gotowych postów na LinkedIn w kilkanaście sekund.</p>
 
 <div class="container">
-    <form id="analyze-form">
-        <textarea id="transcript" maxlength="15000" placeholder="Wklej tekst transkrypcji tutaj..." required></textarea>
-        <div id="char-counter" style="text-align: right; font-size: 12px; color: #7f8c8d; margin-top: 5px;">0 / 15000 znaków</div>
+    <h3 class="box-title">1. Wprowadź dane</h3>
+    <form id="workflow-form">
+        <textarea id="transcript" placeholder="Wklej tekst transkrypcji tutaj..." required></textarea>
+
+        <div class="options-container">
             <div class="option-group">
-                <label for="creativity"><strong>Kreatywność:</strong></label>
-                <select id="creativity" name="creativity">
-                    <option value="niska">Niska (Tylko suche fakty)</option>
-                    <option value="srednia" selected>Średnia (Zbalansowana)</option>
-                    <option value="wysoka">Wysoka (Bardzo opisowa)</option>
+                <label for="tone"><strong>Styl podsumowania:</strong></label>
+                <select id="tone">
+                    <option value="srednia" selected>Średni (Zbalansowany)</option>
+                    <option value="techniczna">Techniczny</option>
+                    <option value="calkiem_na_luzie">Całkiem na luzie</option>
                 </select>
             </div>
-
-        <button type="submit" id="submit-btn">Analizuj tekst</button>
+            <div class="option-group">
+                <label for="creativity"><strong>Kreatywność AI:</strong></label>
+                <select id="creativity">
+                    <option value="niska">Niska (Tylko fakty)</option>
+                    <option value="srednia" selected>Średnia</option>
+                    <option value="wysoka">Wysoka</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" id="submit-btn">Uruchom machinę (Analiza + LinkedIn)</button>
     </form>
+    <div id="main-error" class="error"></div>
+</div>
 
-    <div class="spinner" id="loading-spinner"></div>
+<div class="container" id="analysis-section">
+    <h3 class="box-title">2. Zrozumienie tekstu (Analiza JSON)</h3>
+    <div class="loading" id="analysis-loading"><div class="spinner"></div> Model analizuje transkrypcję...</div>
+    <pre id="analysis-result" style="display: none;"></pre>
+</div>
 
-    <div id="error-msg"></div>
-    // Dynamiczny licznik znaków
-    const transcriptInput = document.getElementById('transcript');
-    const charCounter = document.getElementById('char-counter');
-    const MAX_CHARS = 15000;
+<div class="container" id="linkedin-section">
+    <h3 class="box-title">3. Gotowe posty na LinkedIn</h3>
+    <div class="loading" id="linkedin-loading"><div class="spinner"></div> Copywriter pisze 3 warianty postów...</div>
 
-    transcriptInput.addEventListener('input', function() {
-    const currentLength = this.value.length;
-    charCounter.textContent = `${currentLength} / ${MAX_CHARS} znaków`;
-
-    // Kolorujemy na czerwono, gdy zbliżamy się do limitu
-    if (currentLength > MAX_CHARS * 0.9) {
-    charCounter.style.color = '#e74c3c';
-    charCounter.style.fontWeight = 'bold';
-    } else {
-    charCounter.style.color = '#7f8c8d';
-    charCounter.style.fontWeight = 'normal';
-    }
-    });
-
-    <div id="result-container">
-        <h3>Wynik analizy:</h3>
-        <pre id="json-result"></pre>
+    <div id="linkedin-results" style="display: none;">
+        <div class="post-card">
+            <h4>🎯 Wariant 1: Ekspercki</h4>
+            <div id="post-ekspercki"></div>
+        </div>
+        <div class="post-card">
+            <h4>📖 Wariant 2: Storytelling</h4>
+            <div id="post-storytelling"></div>
+        </div>
+        <div class="post-card">
+            <h4>🔥 Wariant 3: Zaczepny (Dyskusja)</h4>
+            <div id="post-zaczepny"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    document.getElementById('analyze-form').addEventListener('submit', async function(e) {
-        e.preventDefault(); // Zatrzymuje przeładowanie strony
+    function formatText(text) {
+        if (!text) return '';
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Zmienia **tekst** na pogrubienie
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')             // Zmienia *tekst* na kursywę
+            .replace(/\n/g, '<br>');                          // Zamienia enter na złamanie linii w HTML
+    }
 
-        // Pobieranie wartości z pół
-        const textInput = document.getElementById('transcript').value;
-        const toneInput = document.getElementById('tone').value;
-        const creativityInput = document.getElementById('creativity').value;
+    document.getElementById('workflow-form').addEventListener('submit', async function(e) {
 
-        // Pobieranie elementów UI
+
+    document.getElementById('workflow-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Pobranie elementów
         const btn = document.getElementById('submit-btn');
-        const spinner = document.getElementById('loading-spinner');
-        const errorMsg = document.getElementById('error-msg');
-        const resultContainer = document.getElementById('result-container');
-        const jsonResult = document.getElementById('json-result');
+        const errorMsg = document.getElementById('main-error');
 
-        // Resetowanie stanu widoku przed wysłaniem
+        // Sekcje
+        const analysisSec = document.getElementById('analysis-section');
+        const linkedinSec = document.getElementById('linkedin-section');
+        const analysisLoad = document.getElementById('analysis-loading');
+        const linkedinLoad = document.getElementById('linkedin-loading');
+
+        // Wyniki
+        const analysisResult = document.getElementById('analysis-result');
+        const linkedinResultsDiv = document.getElementById('linkedin-results');
+
+        // --- RESETOWANIE WIDOKU ---
         errorMsg.style.display = 'none';
-        resultContainer.style.display = 'none';
-        spinner.style.display = 'block';
         btn.disabled = true;
-        btn.innerText = "Przetwarzanie AI (to potrwa kilka sekund)...";
+        btn.innerText = "Trwa przetwarzanie...";
 
-        // Przygotowanie paczki danych do wysłania
+        analysisSec.style.display = 'block';
+        linkedinSec.style.display = 'none';
+        analysisResult.style.display = 'none';
+        linkedinResultsDiv.style.display = 'none';
+        analysisLoad.style.display = 'block';
+
+        // Przygotowanie danych do etapu 1
         const formData = new FormData();
-        formData.append('transcript', textInput);
-        formData.append('tone', toneInput);
-        formData.append('creativity', creativityInput);
+        formData.append('transcript', document.getElementById('transcript').value);
+        formData.append('tone', document.getElementById('tone').value);
+        formData.append('creativity', document.getElementById('creativity').value);
 
         try {
-            // Wysłanie zapytania do backendu (Flask)
-            const response = await fetch('/analyze', {
+            // ==========================================
+            // ETAP 1: ANALIZA TRANSKRYPCJI
+            // ==========================================
+            const response1 = await fetch('/api/analyze-transcript', { method: 'POST', body: formData });
+            const data1 = await response1.json();
+            if (!response1.ok) throw new Error(data1.error || 'Błąd podczas analizy.');
+
+            // Pokazujemy wynik analizy
+            analysisLoad.style.display = 'none';
+            analysisResult.textContent = JSON.stringify(data1, null, 4);
+            analysisResult.style.display = 'block';
+
+            // ==========================================
+            // ETAP 2: GENEROWANIE POSTÓW LINKEDIN
+            // ==========================================
+            linkedinSec.style.display = 'block';
+            linkedinLoad.style.display = 'block';
+
+            // Wysyłamy wygenerowany JSON (data1) prosto do drugiego endpointu!
+            const response2 = await fetch('/api/generate-linkedin', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data1) // Przesyłamy JSON-a
             });
+            const data2 = await response2.json();
+            if (!response2.ok) throw new Error(data2.error || 'Błąd podczas pisania postów.');
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Wystąpił nieznany błąd serwera.');
-            }
-
-            // Sukces! Wyświetlamy JSON
-            jsonResult.textContent = JSON.stringify(data, null, 4);
-            resultContainer.style.display = 'block';
+            // Wstawiamy posty formatując je na żywo na HTML
+                linkedinLoad.style.display = 'none';
+            document.getElementById('post-ekspercki').innerHTML = formatText(data2.post_ekspercki);
+            document.getElementById('post-storytelling').innerHTML = formatText(data2.post_storytelling);
+            document.getElementById('post-zaczepny').innerHTML = formatText(data2.post_zaczepny);
 
         } catch (error) {
-            // Obsługa błędu
+            // Łapiemy błędy z któregokolwiek etapu
+            analysisLoad.style.display = 'none';
+            linkedinLoad.style.display = 'none';
             errorMsg.textContent = error.message;
             errorMsg.style.display = 'block';
         } finally {
-            // Przywrócenie przycisku i ukrycie spinnera
-            spinner.style.display = 'none';
             btn.disabled = false;
-            btn.innerText = "Analizuj tekst";
+            btn.innerText = "Uruchom machinę ponownie";
         }
     });
 </script>
