@@ -16,3 +16,6 @@ __pycache__/
 
 # 5. Cache narzędzi testowych (Generowane przez pytesta)
 .pytest_cache/
+
+# 6. Raporty z testów API
+test_reports/
