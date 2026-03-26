@@ -89,6 +89,12 @@
     </div>
 </div>
 
+<div class="container" id="image-section">
+    <h3 class="box-title">4. Miniaturka do posta (Nano Banana / Imagen)</h3>
+    <div class="loading" id="image-loading"><div class="spinner"></div> Malowanie obrazu...</div>
+    <img id="generated-image" style="display: none; width: 100%; max-width: 600px; border-radius: 8px; margin: 0 auto;" alt="Wygenerowana miniaturka" />
+</div>
+
 <script>
     function formatText(text) {
         if (!text) return '';
@@ -154,6 +160,30 @@
             document.getElementById('post-storytelling').innerHTML = formatText(data2.post_storytelling);
             document.getElementById('post-zaczepny').innerHTML = formatText(data2.post_zaczepny);
             linkedinResultsDiv.style.display = 'block';
+
+            // ==========================================
+                // ETAP 3: GENEROWANIE GRAFIKI
+                // ==========================================
+                const imageSec = document.getElementById('image-section');
+                const imageLoad = document.getElementById('image-loading');
+                const generatedImg = document.getElementById('generated-image');
+
+                imageSec.style.display = 'block';
+                imageLoad.style.display = 'block';
+                generatedImg.style.display = 'none';
+
+                const response3 = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data1) // Znowu podrzucamy pierwszego JSONa!
+                });
+
+                const data3 = await response3.json();
+                if (!response3.ok) throw new Error(data3.error || 'Błąd podczas tworzenia grafiki.');
+
+                imageLoad.style.display = 'none';
+                generatedImg.src = data3.image_url;
+                generatedImg.style.display = 'block';
 
         } catch (error) {
             analysisLoad.style.display = 'none';
