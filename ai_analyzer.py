@@ -5,6 +5,7 @@ from google.genai import types
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from ai_config import AIProfile
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type # <-- DODANY IMPORT
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -22,7 +23,12 @@ class PodcastSchema(BaseModel):
     dlugosc_szacowana_min: int
 
 # 2. Nasza główna funkcja
-def analyze_transcript(transcript_text: str, profile: AIProfile = None) -> str:
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(Exception)
+)
+def generate_linkedin_posts(podcast_data: dict) -> str:
     if profile is None:
         profile = AIProfile()
 

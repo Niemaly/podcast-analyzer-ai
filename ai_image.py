@@ -1,6 +1,7 @@
 import os
 import base64
 from google import genai
+from google.genai import types # <-- DODANY IMPORT (Wymagany do nowej konfiguracji)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,8 +19,7 @@ def generate_podcast_thumbnail(podcast_data: dict) -> str:
     tematy = ", ".join(podcast_data.get("glowne_tematy", []))
     tytul = podcast_data.get("tytul", "Podcast")
 
-    # Tworzymy prompt graficzny (modele graficzne często mają problem z pisaniem tekstu,
-    # więc prosimy o obraz bez liter)
+    # Tworzymy prompt graficzny
     prompt = (
         f"A professional, cinematic, eye-catching thumbnail for a LinkedIn post about a podcast. "
         f"The podcast is titled '{tytul}'. The core themes are: {tematy}. "
@@ -27,18 +27,18 @@ def generate_podcast_thumbnail(podcast_data: dict) -> str:
         "No text, no words, no letters in the image."
     )
 
-    # Uderzamy do API generowania obrazów
+    # Uderzamy do API generowania obrazów (ZAKTUALIZOWANA NAZWA MODELU!)
     result = client.models.generate_images(
-        model='imagen-3.0-generate-001', # Model z rodziny obsługującej grafiki
+        model='imagen-4.0-generate-001', # <-- ZMIANA TUTAJ
         prompt=prompt,
-        config=dict(
+        config=types.GenerateImagesConfig( # <-- ZMIANA TUTAJ
             number_of_images=1,
-            aspect_ratio="16:9", # Idealne proporcje na LinkedIn!
+            aspect_ratio="16:9",
             output_mime_type="image/jpeg"
         )
     )
 
-    # Przerabiamy surowe bajty obrazka na format Base64 (zrozumiały dla przeglądarek)
+    # Przerabiamy surowe bajty obrazka na format Base64
     for generated_image in result.generated_images:
         image_bytes = generated_image.image.image_bytes
         return base64.b64encode(image_bytes).decode('utf-8')

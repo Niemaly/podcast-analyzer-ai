@@ -20,7 +20,7 @@
         .box-title { border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-bottom: 15px; color: #2c3e50; }
         .error { color: #e74c3c; background: #fadbd8; padding: 15px; border-radius: 5px; margin-top: 20px; display: none; }
 
-        #analysis-section, #linkedin-section { display: none; }
+        #analysis-section, #linkedin-section, #image-section { display: none; }
         .post-card { background: #f8f9fa; border-left: 4px solid #3498db; padding: 15px; margin-bottom: 15px; border-radius: 4px; white-space: pre-wrap; font-size: 15px;}
         .post-card h4 { margin-top: 0; color: #2980b9; }
         pre { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; font-size: 14px; }
@@ -33,7 +33,7 @@
 <body>
 
 <h1>🚀 Studio Podcastowe AI</h1>
-<p class="subtitle">Od surowej transkrypcji do gotowych postów na LinkedIn w kilkanaście sekund.</p>
+<p class="subtitle">Od surowej transkrypcji do gotowych postów i grafik w kilkanaście sekund.</p>
 
 <div class="container">
     <h3 class="box-title">1. Wprowadź dane</h3>
@@ -58,7 +58,7 @@
                 </select>
             </div>
         </div>
-        <button type="submit" id="submit-btn">Uruchom machinę (Analiza + LinkedIn)</button>
+        <button type="submit" id="submit-btn">Uruchom machinę (Analiza + LinkedIn + Grafika)</button>
     </form>
     <div id="main-error" class="error"></div>
 </div>
@@ -90,9 +90,9 @@
 </div>
 
 <div class="container" id="image-section">
-    <h3 class="box-title">4. Miniaturka do posta (Nano Banana / Imagen)</h3>
+    <h3 class="box-title">4. Miniaturka do posta</h3>
     <div class="loading" id="image-loading"><div class="spinner"></div> Malowanie obrazu...</div>
-    <img id="generated-image" style="display: none; width: 100%; max-width: 600px; border-radius: 8px; margin: 0 auto;" alt="Wygenerowana miniaturka" />
+    <img id="generated-image" style="display: none; width: 100%; border-radius: 8px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" alt="Wygenerowana miniaturka" />
 </div>
 
 <script>
@@ -112,20 +112,29 @@
 
         const analysisSec = document.getElementById('analysis-section');
         const linkedinSec = document.getElementById('linkedin-section');
+        const imageSec = document.getElementById('image-section'); // Nowe
+
         const analysisLoad = document.getElementById('analysis-loading');
         const linkedinLoad = document.getElementById('linkedin-loading');
+        const imageLoad = document.getElementById('image-loading'); // Nowe
 
         const analysisResult = document.getElementById('analysis-result');
         const linkedinResultsDiv = document.getElementById('linkedin-results');
+        const generatedImg = document.getElementById('generated-image'); // Nowe
 
         errorMsg.style.display = 'none';
         btn.disabled = true;
         btn.innerText = "Trwa przetwarzanie...";
 
+        // Reset widoczności sekcji
         analysisSec.style.display = 'block';
         linkedinSec.style.display = 'none';
+        imageSec.style.display = 'none';
+
         analysisResult.style.display = 'none';
         linkedinResultsDiv.style.display = 'none';
+        generatedImg.style.display = 'none';
+
         analysisLoad.style.display = 'block';
 
         const formData = new FormData();
@@ -161,33 +170,26 @@
             document.getElementById('post-zaczepny').innerHTML = formatText(data2.post_zaczepny);
             linkedinResultsDiv.style.display = 'block';
 
-            // ==========================================
-                // ETAP 3: GENEROWANIE GRAFIKI
-                // ==========================================
-                const imageSec = document.getElementById('image-section');
-                const imageLoad = document.getElementById('image-loading');
-                const generatedImg = document.getElementById('generated-image');
+            // Etap 3: Grafika Nano Banana
+            imageSec.style.display = 'block';
+            imageLoad.style.display = 'block';
 
-                imageSec.style.display = 'block';
-                imageLoad.style.display = 'block';
-                generatedImg.style.display = 'none';
+            const response3 = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data1) // Przesyłamy JSON-a z analizy, żeby grafika pasowała do tematu
+            });
+            const data3 = await response3.json();
+            if (!response3.ok) throw new Error(data3.error || 'Błąd podczas generowania grafiki.');
 
-                const response3 = await fetch('/api/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data1) // Znowu podrzucamy pierwszego JSONa!
-                });
-
-                const data3 = await response3.json();
-                if (!response3.ok) throw new Error(data3.error || 'Błąd podczas tworzenia grafiki.');
-
-                imageLoad.style.display = 'none';
-                generatedImg.src = data3.image_url;
-                generatedImg.style.display = 'block';
+            imageLoad.style.display = 'none';
+            generatedImg.src = data3.image_url;
+            generatedImg.style.display = 'block';
 
         } catch (error) {
             analysisLoad.style.display = 'none';
             linkedinLoad.style.display = 'none';
+            imageLoad.style.display = 'none';
             errorMsg.textContent = error.message;
             errorMsg.style.display = 'block';
         } finally {

@@ -2,10 +2,9 @@ from flask import Flask, render_template, request, jsonify
 from ai_analyzer import analyze_transcript
 from ai_config import AIProfile, ToneLevel, CreativityLevel
 from ai_social import generate_linkedin_posts
-from ai_image import generate_podcast_thumbnail
+from ai_image import generate_podcast_thumbnail # <-- NOWY IMPORT
 import json
 import traceback
-
 
 app = Flask(__name__)
 
@@ -53,10 +52,7 @@ def api_generate_linkedin():
         traceback.print_exc()
         return jsonify({'error': f'Wystąpił błąd podczas pisania postów: {str(e)}'}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-    # --- API: ETAP 3 (GENEROWANIE GRAFIKI) ---
+# --- NOWE API: GENEROWANIE GRAFIKI ---
 @app.route('/api/generate-image', methods=['POST'])
 def api_generate_image():
     try:
@@ -66,13 +62,15 @@ def api_generate_image():
 
         image_b64 = generate_podcast_thumbnail(podcast_data)
 
-        # Zwracamy kod obrazka z prefiksem, który przeglądarka od razu wyświetli
+        # Zwracamy kod obrazka w formacie Data URL gotowym do wstawienia w tag <img>
         return jsonify({
             'image_url': f"data:image/jpeg;base64,{image_b64}"
         })
 
     except Exception as e:
         print("\n🚨 BŁĄD API GRAFIKI 🚨")
-        import traceback
         traceback.print_exc()
         return jsonify({'error': f'Wystąpił błąd podczas generowania obrazka: {str(e)}'}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
