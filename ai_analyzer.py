@@ -26,8 +26,10 @@ class PodcastSchema(BaseModel):
 @retry(
     wait=wait_exponential(multiplier=1, min=2, max=10),
     stop=stop_after_attempt(3),
-    retry=retry_if_exception_type(Exception)
+    retry=retry_if_exception_type(Exception),
+    reraise=True  # <-- DODAJ TO!
 )
+
 def analyze_transcript(transcript_text: str, profile: AIProfile = None) -> str:
     if profile is None:
         profile = AIProfile()

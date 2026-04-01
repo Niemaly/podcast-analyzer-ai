@@ -3,6 +3,9 @@ import base64
 from google import genai
 from google.genai import types # <-- DODANY IMPORT (Wymagany do nowej konfiguracji)
 from dotenv import load_dotenv
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+
+
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -10,6 +13,13 @@ if not api_key:
     raise ValueError("Nie znaleziono klucza API!")
 
 client = genai.Client(api_key=api_key)
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=4, max=15),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(Exception),
+    reraise=True  # <-- DODAJ TO!
+)
 
 def generate_podcast_thumbnail(podcast_data: dict) -> str:
     """

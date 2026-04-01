@@ -4,6 +4,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -16,6 +17,13 @@ class LinkedInPostsSchema(BaseModel):
     post_ekspercki: str
     post_storytelling: str
     post_zaczepny: str
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(Exception),
+    reraise=True  # <-- DODAJ TO!
+)
 
 def generate_linkedin_posts(podcast_data: dict) -> str:
     context_text = json.dumps(podcast_data, ensure_ascii=False, indent=2)
